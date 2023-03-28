@@ -5,6 +5,8 @@
 This package helps you rename your Trade Republic PDF files and optionally group them into subfolders by type (crypto
 and securities) and/or ISIN/abbreviation.
 
+[![Example](https://taldres.dev/i/traderepublic_example.png)]
+
 ## Installation
 
 1. Clone Repo
