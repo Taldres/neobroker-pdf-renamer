@@ -61,6 +61,10 @@ php bin/console app:run -ct
 
   Real path to the output directory
 
+## Supported languages
+
+- `de` German
+
 ## Environment Variables (optional)
 
 1. Create .env file
