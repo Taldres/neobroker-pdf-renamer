@@ -495,8 +495,8 @@ class RunCommand extends Command
             return $option;
         }
 
-        if (!empty($_ENV['SOURCE_DIR'])) {
-            return $_ENV['SOURCE_DIR'];
+        if (!empty($_ENV['INPUT_DIR'])) {
+            return $_ENV['INPUT_DIR'];
         }
 
         return $this->projectRoot . "/input";
@@ -515,8 +515,8 @@ class RunCommand extends Command
             return $option;
         }
 
-        if (!empty($_ENV['TARGET_DIR'])) {
-            return $_ENV['TARGET_DIR'];
+        if (!empty($_ENV['OUTPUT_DIR'])) {
+            return $_ENV['OUTPUT_DIR'];
         }
 
         return $this->projectRoot . "/output";
