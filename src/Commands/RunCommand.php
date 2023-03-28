@@ -46,8 +46,10 @@ class RunCommand extends Command
 
         $this->parser = new Parser();
 
-        $dotenv = new Dotenv();
-        $dotenv->load($this->projectRoot . "/.env");
+        if (file_exists($this->projectRoot . "/.env")) {
+            $dotenv = new Dotenv();
+            $dotenv->load($this->projectRoot . "/.env");
+        }
     }
 
     /**
