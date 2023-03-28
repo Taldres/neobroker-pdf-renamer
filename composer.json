@@ -36,7 +36,6 @@
   },
   "scripts": {
     "auto-scripts": [
-      "@phpstan"
     ],
     "post-install-cmd": [
       "@auto-scripts"
