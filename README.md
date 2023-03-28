@@ -7,6 +7,12 @@ and securities) and/or ISIN/abbreviation.
 
 ![Example](https://taldres.dev/i/traderepublic_example.png)
 
+## Requirements
+
+- PHP 8.2
+- PHP Fileinfo Extension
+- Composer
+
 ## Installation
 
 1. Clone Repo
