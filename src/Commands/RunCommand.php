@@ -177,7 +177,8 @@ class RunCommand extends Command
 
         $rii = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator(
-                $this->sourceRoot, FilesystemIterator::SKIP_DOTS
+                $this->sourceRoot,
+                FilesystemIterator::SKIP_DOTS
             )
         );
 
