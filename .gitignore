@@ -1,0 +1,10 @@
+.env
+.idea
+
+/vendor
+/output/*
+/input/*
+
+# keep
+!/output/.gitkeep
+!/input/.gitkeep

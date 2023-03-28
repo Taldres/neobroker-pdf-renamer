@@ -1,0 +1,18 @@
+#!/usr/bin/env php
+<?php
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use App\Commands\RunCommand;
+use App\Commands\ValidateTranslationCommand;
+use Symfony\Component\Console\Application;
+
+$app = new Application();
+
+$app->addCommands(
+    [
+        new RunCommand(),
+        new ValidateTranslationCommand(),
+    ]
+);
+
+$app->run();

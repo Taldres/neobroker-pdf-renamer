@@ -1,0 +1,40 @@
+{
+  "name": "taldres/traderepublic-pdf-renamer",
+  "description": "A tool to rename and optionally sort Trade Republic pdf files.",
+  "authors": [
+    {
+      "name": "Taldres",
+      "email": "contact@taldres.dev",
+      "homepage": "https://github.com/Taldres",
+      "role": "Developer"
+    }
+  ],
+  "license": [
+    "MIT"
+  ],
+  "keywords": [
+    "traderepublic",
+    "pdf renamer"
+  ],
+  "require": {
+    "php": ">=8.1",
+    "symfony/console": "^6.2",
+    "symfony/dotenv": "^6.2",
+    "smalot/pdfparser": "^2.4",
+    "ext-fileinfo": "*"
+  },
+  "config": {
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src"
+    }
+  },
+  "scripts": {
+    "auto-scripts": {
+    }
+  },
+  "require-dev": {
+    "phpstan/phpstan": "^1.10"
+  }
+}
