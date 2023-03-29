@@ -42,8 +42,8 @@ class RunCommand extends Command
         parent::__construct($name);
 
         $this->projectRoot = dirname(__DIR__, 2);
-        $this->sourceRoot = $this->projectRoot . "/input";
-        $this->targetRoot = $this->projectRoot . "/output";
+        $this->sourceRoot  = $this->projectRoot . "/input";
+        $this->targetRoot  = $this->projectRoot . "/output";
 
         $this->parser = new Parser();
     }
@@ -65,7 +65,7 @@ class RunCommand extends Command
                  'group-type',
                  't',
                  InputOption::VALUE_NONE,
-                 'Group files by type like stocks or crypto.',
+                 'Group files by type like securities or crypto.',
              )
              ->addOption(
                  'group-code',
@@ -313,10 +313,10 @@ class RunCommand extends Command
         return match (true) {
             (bool) preg_match(
                 "/" . strtoupper(
-                    (string) $this->translator->translate(Type::STOCK_TRADE->value, Translator::CATEGORY_INDICATORS)
+                    (string) $this->translator->translate(Type::SECURITY_TRADE->value, Translator::CATEGORY_INDICATORS)
                 ) . "/m",
                 $text
-            ) => Type::STOCK_TRADE,
+            ) => Type::SECURITY_TRADE,
 
             (bool) preg_match(
                 "/" . strtoupper(

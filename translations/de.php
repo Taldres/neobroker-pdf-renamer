@@ -3,13 +3,13 @@
 return [
     'target_directories' => [
         "trades"        => "Trades",
-        "trades_stock"  => "Wertpapiere",
+        "trades_security"  => "Wertpapiere",
         "trades_crypto" => "Crypto",
         "payouts"       => "Ausschüttungen",
         "others"        => "Andere",
     ],
     'indicators'         => [
-        "stock_trade"  => "WERTPAPIERABRECHNUNG",
+        "security_trade"  => "WERTPAPIERABRECHNUNG",
         "crypto_trade" => "ABRECHNUNG CRYPTOGESCHÄFT",
         "payout"       => "AUSSCHÜTTUNG",
     ],

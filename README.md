@@ -56,24 +56,12 @@ php bin/console app:run -ct
 
 ### Parameters
 
-- `-t, --group-type`
-
-  Group files by type like stocks or crypto.
-
-
-- `-c, --group-code`
-
-  Group files by code like ISIN or cryptocurrency abbreviation.
-
-
-- `-l, --lang[=LANG]`
-
-  The language in which the Trade Republic files were generated. (two letters, like: de) [default: "de"]
-
-
-- `-k, --keep-file`
-
-  Keep already existing files in target directory instead of deleting them at startup.
+```
+-k, --keep-files      Keep already existing files in target directory instead of deleting them at startup.
+-t, --group-type      Group files by type like securities or crypto.
+-c, --group-code      Group files by code like ISIN or cryptocurrency abbreviation .
+-l, --lang[=LANG]     The language in which the Trade Republic files were generated. (two letters, like: de) [default: "de"]
+```
 
 ## Supported languages
 
