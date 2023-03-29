@@ -8,7 +8,10 @@ and securities) and/or ISIN/abbreviation.
 ![Example](https://taldres.dev/i/traderepublic_example.png)
 
 ## Requirements
+#### With Docker
+- just Docker 😎
 
+#### Without Docker
 - PHP 8.2
 - PHP Fileinfo Extension
 - Composer
@@ -21,7 +24,7 @@ and securities) and/or ISIN/abbreviation.
 git clone https://github.com/Taldres/traderepublic-pdf-renamer.git
 ```
 
-2. Install dependencies
+2. Install dependencies (if you are not using docker)
 
 ```bash
 composer install --no-dev
@@ -32,7 +35,18 @@ composer install --no-dev
 1. Copy your Trade Republic files to `./input`.
 2. You can easily start renaming with the following command:
 
+- #### Docker variant
 ```bash
+# Start docker containers
+docker compose up -d
+
+# Run the app. Available parameters are explained below
+docker exec app php bin/console app:run -ct
+```
+
+- #### Without Docker
+```bash
+# Run the app. Available parameters are explained below
 php bin/console app:run -ct
 ```
 
@@ -59,32 +73,6 @@ php bin/console app:run -ct
 
   Keep already existing files in target directory instead of deleting them at startup.
 
-
-- `-i, --input-dir[=INPUT-DIR]`
-
-  Real path to the input directory
-
-
-- `-o, --output-dir[=OUTPUT-DIR]`
-
-  Real path to the output directory
-
 ## Supported languages
 
 - `de` German
-
-## Environment Variables (optional)
-
-1. Create .env file
-
-```bash
-cp .env.example .env
-```
-
-2. Fill the variables if you want to deviate from the default folders and do not want to specify them as parameters
-   every time.
-
-- `INPUT_DIR`
-
-- `OUTPUT_DIR`
-

@@ -50,7 +50,6 @@ class ValidateTranslationCommand extends Command
 
             $this->translator = new Translator();
             $this->translator->validateTranslationsFile($lang);
-
         } catch (Throwable $throwable) {
             $output->writeln(
                 "<error>{$throwable->getMessage()}</error>"

@@ -19,9 +19,12 @@
   "require": {
     "php": ">=8.1",
     "symfony/console": "^6.2",
-    "symfony/dotenv": "^6.2",
     "smalot/pdfparser": "^2.4",
     "ext-fileinfo": "*"
+  },
+  "require-dev": {
+    "phpstan/phpstan": "^1.10",
+    "friendsofphp/php-cs-fixer": "^3.15"
   },
   "config": {
   },
@@ -31,10 +34,11 @@
     }
   },
   "scripts": {
-    "auto-scripts": {
-    }
-  },
-  "require-dev": {
-    "phpstan/phpstan": "^1.10"
+    "csfixer": [
+      "vendor/bin/php-cs-fixer fix src --rules=@PSR12"
+    ],
+    "phpstan": [
+      "phpstan analyze -c phpstan.neon"
+    ]
   }
 }

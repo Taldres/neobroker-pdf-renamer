@@ -11,6 +11,5 @@ readonly class File
         public string $date,
         public Type $type,
     ) {
-
     }
 }

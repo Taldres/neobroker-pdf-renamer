@@ -17,7 +17,6 @@ use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Dotenv\Dotenv;
 use Throwable;
 
 #[AsCommand(name: 'app:run')]
@@ -43,13 +42,10 @@ class RunCommand extends Command
         parent::__construct($name);
 
         $this->projectRoot = dirname(__DIR__, 2);
+        $this->sourceRoot = $this->projectRoot . "/input";
+        $this->targetRoot = $this->projectRoot . "/output";
 
         $this->parser = new Parser();
-
-        if (file_exists($this->projectRoot . "/.env")) {
-            $dotenv = new Dotenv();
-            $dotenv->load($this->projectRoot . "/.env");
-        }
     }
 
     /**
@@ -84,20 +80,6 @@ class RunCommand extends Command
                  'The language in which the Trade Republic files were generated. (two letters, like: de)',
                  'de'
              )
-             ->addOption(
-                 'input-dir',
-                 'i',
-                 InputOption::VALUE_OPTIONAL,
-                 'Path to the input directory',
-                 null
-             )
-             ->addOption(
-                 'output-dir',
-                 'o',
-                 InputOption::VALUE_OPTIONAL,
-                 'Path to the output directory',
-                 null
-             )
         ;
     }
 
@@ -116,13 +98,6 @@ class RunCommand extends Command
             $this->keepOldFiles = (bool) $input->getOption('keep-files');
             $this->groupByCode  = (bool) $input->getOption('group-code');
             $this->groupByType  = (bool) $input->getOption('group-type');
-
-            $inputPathOption  = !empty($input->getOption('input-dir')) ? strval($input->getOption('input-dir')) : null;
-            $outputPathOption = !empty($input->getOption('output-dir')) ? strval($input->getOption('output-dir'))
-                : null;
-
-            $this->sourceRoot = $this->getSourceRoot($inputPathOption);
-            $this->targetRoot = $this->getTargetRoot($outputPathOption);
 
             $this->translator = new Translator($this->lang);
 
@@ -177,7 +152,8 @@ class RunCommand extends Command
 
         $rii = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator(
-                $this->sourceRoot, FilesystemIterator::SKIP_DOTS
+                $this->sourceRoot,
+                FilesystemIterator::SKIP_DOTS
             )
         );
 
@@ -207,7 +183,7 @@ class RunCommand extends Command
     private function parsePdf(string $file): ?string
     {
         try {
-            return $this->parser->parseFile($file)->getText();
+            return $this->parser->parseFile($file)->getText(1);
         } catch (Throwable $throwable) {
             return null;
         }
@@ -222,7 +198,7 @@ class RunCommand extends Command
      */
     private function parseIsin(string $text): ?string
     {
-        $pregMatch = preg_match("/(?:ISIN:\s*([A-Z]{2}[A-Z0-9]{9}[0-9]))/m", $text, $matches);
+        $pregMatch = preg_match("/ISIN:\s*([A-Z]{2}[A-Z0-9]{9}[0-9])/m", $text, $matches);
 
         if ((bool) $pregMatch === false || count($matches) < 2) {
             return null;
@@ -241,7 +217,7 @@ class RunCommand extends Command
     private function parseDate(string $text): ?string
     {
         $pregMatch = preg_match(
-            "/(?:DATUM\s*((3[01]|[12][0-9]|0?[1-9])\.(1[012]|0?[1-9])\.((?:19|20)\d{2})))/m",
+            "/DATUM\s*((3[01]|[12][0-9]|0?[1-9])\.(1[012]|0?[1-9])\.((?:19|20)\d{2}))/m",
             $text,
             $matches
         );
@@ -262,7 +238,7 @@ class RunCommand extends Command
      */
     private function getCryptoAbbreviation(string $text): ?string
     {
-        $pregMatch = preg_match("/(?:([[:alnum:][:blank:]*]+)\s\(([A-Z]{3,5})\))/m", $text, $matches);
+        $pregMatch = preg_match("/([[:alnum:][:blank:]*]+)\s\(([A-Z]{3,5})\)/m", $text, $matches);
 
         if ((bool) $pregMatch === false || count($matches) < 2) {
             return null;
@@ -336,25 +312,25 @@ class RunCommand extends Command
     {
         return match (true) {
             (bool) preg_match(
-                "/(?:" . strtoupper(
+                "/" . strtoupper(
                     (string) $this->translator->translate(Type::STOCK_TRADE->value, Translator::CATEGORY_INDICATORS)
-                ) . ")/m",
+                ) . "/m",
                 $text
             ) => Type::STOCK_TRADE,
 
             (bool) preg_match(
-                "/(?:" . strtoupper(
+                "/" . strtoupper(
                     (string) $this->translator->translate(Type::CRYPTO_TRADE->value, Translator::CATEGORY_INDICATORS)
-                ) . ")/m",
+                ) . "/m",
                 $text
             ) => Type::CRYPTO_TRADE,
 
             (bool) preg_match(
-                "/(?:"
+                "/"
                 . strtoupper(
                     (string) $this->translator->translate(Type::PAYOUT->value, Translator::CATEGORY_INDICATORS)
                 )
-                . ")/m",
+                . "/m",
                 $text
             ) => Type::PAYOUT,
 
@@ -378,15 +354,15 @@ class RunCommand extends Command
         if ($this->groupByType) {
             if ($target->type->targetDirectory()->parentDirectory() !== null) {
                 $targetDirectory .= $this->translator->translate(
-                        $target->type->targetDirectory()->parentDirectory()->value,
-                        Translator::CATEGORY_TARGET_DIRECTORIES
-                    ) . "/";
+                    $target->type->targetDirectory()->parentDirectory()->value,
+                    Translator::CATEGORY_TARGET_DIRECTORIES
+                ) . "/";
             }
 
             $targetDirectory .= $this->translator->translate(
-                    $target->type->targetDirectory()->value,
-                    Translator::CATEGORY_TARGET_DIRECTORIES
-                ) . "/";
+                $target->type->targetDirectory()->value,
+                Translator::CATEGORY_TARGET_DIRECTORIES
+            ) . "/";
         }
 
         if ($this->groupByCode) {
@@ -482,45 +458,5 @@ class RunCommand extends Command
                 );
             }
         }
-    }
-
-    /**
-     * Returns the path the source root directory
-     *
-     * @param string|null $option
-     *
-     * @return string
-     */
-    private function getSourceRoot(?string $option): string
-    {
-        if (!empty($option)) {
-            return $option;
-        }
-
-        if (!empty($_ENV['INPUT_DIR'])) {
-            return $_ENV['INPUT_DIR'];
-        }
-
-        return $this->projectRoot . "/input";
-    }
-
-    /**
-     * Returns the path the target root directory
-     *
-     * @param string|null $option
-     *
-     * @return string
-     */
-    private function getTargetRoot(?string $option): string
-    {
-        if (!empty($option)) {
-            return $option;
-        }
-
-        if (!empty($_ENV['OUTPUT_DIR'])) {
-            return $_ENV['OUTPUT_DIR'];
-        }
-
-        return $this->projectRoot . "/output";
     }
 }

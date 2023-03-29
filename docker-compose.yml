@@ -1,0 +1,23 @@
+version: '3.7'
+services:
+
+  composer:
+    image: composer
+    working_dir: /opt/app
+    user: 1000:1000
+    command: ["composer", "install", "--no-dev"]
+    volumes:
+      - "./:/opt/app/"
+
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: ./.docker/php/
+    working_dir: /opt/app
+    depends_on:
+      composer:
+        condition: service_completed_successfully
+    volumes:
+      - "./:/opt/app/"
+      - "./input:/opt/app/input/:rw"
+      - "./output:/opt/app/output/:rw"

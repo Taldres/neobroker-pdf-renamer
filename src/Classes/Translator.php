@@ -103,7 +103,8 @@ class Translator
                 throw new Exception(
                     "Invalid translation! Missing key: ['"
                     . self::CATEGORY_INDICATORS
-                    . "'][{$requiredIndicator->value}]", 1680013549400
+                    . "'][{$requiredIndicator->value}]",
+                    1680013549400
                 );
             }
         }
@@ -129,7 +130,8 @@ class Translator
                 throw new Exception(
                     "Invalid translation! Missing key: ['"
                     . self::CATEGORY_TARGET_DIRECTORIES
-                    . "'][{$requiredTargetDirectory->value}]", 1680013568626
+                    . "'][{$requiredTargetDirectory->value}]",
+                    1680013568626
                 );
             }
         }
