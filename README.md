@@ -2,8 +2,10 @@
 
 # Trade Republic PDF Renamer
 
-This package helps you rename your Trade Republic PDF files and optionally group them into subfolders by type (crypto
-and securities) and/or ISIN/abbreviation.
+This tool helps you rename your Trade Republic PDF files and converts the ugly names like `2023-01-05 0840 Kauf FTSE All-World High Dividend Yield USD (Dist) 1.pdf` into short and beautiful ones like `IE00B8GKDB10_20230105-1.pdf`. 
+
+Optionally you can group them into subfolders by type (crypto and securities) and/or ISIN/abbreviation:
+
 
 ![Example](https://taldres.dev/i/traderepublic_example.png)
 
