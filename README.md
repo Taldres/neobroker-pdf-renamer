@@ -14,7 +14,7 @@ Optionally you can group them into subfolders by type (crypto and securities) an
 - just Docker 😎
 
 #### Without Docker
-- PHP 8.2
+- PHP 8.1
 - PHP Fileinfo Extension
 - Composer
 

@@ -1,6 +1,10 @@
 <?php
 
-namespace App\Enums;
+declare(strict_types=1);
+
+namespace App\Enum;
+
+use App\Enum\Directory\TargetDirectory;
 
 enum Type: string
 {
@@ -8,6 +12,16 @@ enum Type: string
     case CRYPTO_TRADE = 'crypto_trade';
     case PAYOUT = 'payout';
     case OTHER = 'other';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::SECURITY_TRADE => 'Security Trade',
+            self::CRYPTO_TRADE => 'Crypto Trade',
+            self::PAYOUT => 'Payout',
+            default => 'Other',
+        };
+    }
 
     public function targetDirectory(): TargetDirectory
     {

@@ -16,11 +16,20 @@
     "traderepublic",
     "pdf renamer"
   ],
+  "bin": [
+    "bin/console"
+  ],
   "require": {
     "php": ">=8.1",
     "symfony/console": "^6.2",
+    "symfony/dependency-injection": "^6.2",
+    "symfony/config": "^6.2",
+    "symfony/yaml": "^6.2",
     "smalot/pdfparser": "^2.4",
-    "ext-fileinfo": "*"
+    "ext-fileinfo": "*",
+    "symfony/filesystem": "^6.2",
+    "league/flysystem": "^3.12",
+    "league/mime-type-detection": "^1.11"
   },
   "require-dev": {
     "phpstan/phpstan": "^1.10",
@@ -30,7 +39,8 @@
   },
   "autoload": {
     "psr-4": {
-      "App\\": "src"
+      "App\\": "src",
+      "Vendor\\": "vendor"
     }
   },
   "scripts": {
