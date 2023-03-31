@@ -4,3 +4,5 @@ parameters:
 		- bin
 		- src
 		- translations
+	treatPhpDocTypesAsCertain: false
+	checkGenericClassInNonGenericObjectType: false

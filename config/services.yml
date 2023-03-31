@@ -1,0 +1,33 @@
+parameters:
+  version: '0.2.0'
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    bind:
+      string $version: '%version%'
+      string $projectDirectory: '%project_directory%'
+      string $vendorDirectory: '%vendor_directory%'
+
+  _instanceof:
+    Symfony\Component\Console\Command\Command:
+      tags: [ 'command' ]
+
+  App\:
+    public: true
+    resource: '../src/'
+    exclude: ['../src/Model/', '../src/Exception/']
+
+  App\Application:
+    public: true
+    arguments:
+      - !tagged command
+
+  League\Flysystem\Local\LocalFilesystemAdapter:
+    arguments:
+      - '%project_directory%'
+
+  League\Flysystem\Filesystem:
+    arguments:
+        - '@League\Flysystem\Local\LocalFilesystemAdapter'

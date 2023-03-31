@@ -2,6 +2,7 @@
 .idea
 .php-cs-fixer.cache
 
+/var
 /vendor
 /output/*
 /input/*

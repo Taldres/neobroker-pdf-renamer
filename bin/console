@@ -1,18 +1,26 @@
 #!/usr/bin/env php
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
 
-use App\Commands\RunCommand;
-use App\Commands\ValidateTranslationCommand;
-use Symfony\Component\Console\Application;
+use App\Application;
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
-$app = new Application();
+require __DIR__ . '/../vendor/autoload.php';
 
-$app->addCommands(
-    [
-        new RunCommand(),
-        new ValidateTranslationCommand(),
-    ]
-);
+$container = new ContainerBuilder();
 
-$app->run();
+$projectRoot = dirname(__DIR__);
+
+$container->setParameter('project_directory', $projectRoot);
+$container->setParameter('vendor_directory', $projectRoot.'/vendor');
+
+$loader = new YamlFileLoader($container, new FileLocator());
+$loader->load(__DIR__.'/../config/services.yml');
+
+$container->compile();
+
+/** @var Application $app */
+$app = $container->get(Application::class);
+
+exit($app->run());
