@@ -1,13 +1,13 @@
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
-# Trade Republic PDF Renamer
+# Neobroker PDF Renamer
 
-This tool helps you rename your Trade Republic PDF files and converts the ugly names like `2023-01-05 0840 Kauf FTSE All-World High Dividend Yield USD (Dist) 1.pdf` into short and beautiful ones like `IE00B8GKDB10_20230105-1.pdf`. 
+This tool helps you rename your Neobroker PDF files and converts the ugly names like `2023-01-05 0840 Kauf FTSE All-World High Dividend Yield USD (Dist) 1.pdf` (Example: Trade Republic) into short and beautiful ones like `IE00B8GKDB10_20230105-1.pdf`. 
 
 Optionally you can group them into subfolders by type (crypto and securities) and/or ISIN/abbreviation:
 
-
-![Example](https://taldres.dev/i/traderepublic_example.png)
+![Example](/screenshots/example_renamed_files.jpg)
+![Example](/screenshots/example_console_result.jpg)
 
 ## Requirements
 #### With Docker
@@ -43,7 +43,7 @@ composer install --no-dev
 docker compose up -d
 
 # Run the app. Available parameters are explained below
-docker exec app php bin/console app:run -ct
+docker compose exec app php bin/console rename:run -ct
 ```
 
 - #### Without Docker
@@ -61,8 +61,34 @@ php bin/console app:run -ct
 -t, --group-type      Group files by type like securities or crypto.
 -c, --group-code      Group files by code like ISIN or cryptocurrency abbreviation .
 -l, --lang[=LANG]     The language in which the Trade Republic files were generated. (two letters, like: de) [default: "de"]
+-b, --broker[=BROKER]  The brokers name who generated the files. [default: "traderepublic"]
 ```
+
+### .env Configuration (optional)
+Optionally, you can also save the `language` and `broker` in the `.env` file if you want to deviate from the default values and/or do not want to pass these parameters via the console command.
+
+However, these values are ignored once you pass these parameters via the console command.
+
+#### Create the .env file
+
+```bash
+cp .env.example .env
+```
+
+#### Set the variables
+
+`LANGUAGE=`
+
+`BROKER=`
 
 ## Supported languages
 
-- `de` German
+Code | Language
+--- |--------
+de | German
+
+## Supported brokers
+
+Code | Broker | Supported languages
+--- |--------| ---
+traderepublic | Trade Republic | de

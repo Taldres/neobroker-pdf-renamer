@@ -5,14 +5,14 @@ return [
         "trades"          => "Trades",
         "trades_security" => "Wertpapiere",
         "trades_crypto"   => "Crypto",
-        "payouts"         => "Ausschüttungen",
+        "dividends"       => "Dividenden",
         "others"          => "Andere",
     ],
     'traderepublic'      => [
         'indicators' => [
             "security_trade" => "WERTPAPIERABRECHNUNG",
             "crypto_trade"   => "ABRECHNUNG CRYPTOGESCHÄFT",
-            "payout"         => "AUSSCHÜTTUNG",
+            "dividends"      => "AUSSCHÜTTUNG",
         ],
     ],
 ];

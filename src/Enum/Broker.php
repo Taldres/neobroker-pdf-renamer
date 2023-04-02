@@ -16,18 +16,6 @@ enum Broker: string
     }
 
     /**
-     * Three-letter code
-     *
-     * @return string
-     */
-    public function shortName(): string
-    {
-        return match ($this) {
-            self::TRADEREPUBLIC => 'trr',
-        };
-    }
-
-    /**
      * @return array<Type>
      */
     public function supportedTypes(): array
@@ -41,10 +29,22 @@ enum Broker: string
                 self::TRADEREPUBLIC => [
                     Type::CRYPTO_TRADE,
                     Type::SECURITY_TRADE,
-                    Type::PAYOUT,
+                    Type::DIVIDENDS,
                 ],
             },
             $default
         );
+    }
+
+    /**
+     * @return array<Language>
+     */
+    public function supportedLanguages(): array
+    {
+        return match ($this) {
+            self::TRADEREPUBLIC => [
+                Language::DE,
+            ],
+        };
     }
 }

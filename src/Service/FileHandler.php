@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Enum\Directory\SystemDirectory;
+use App\Event\CopyTargetFileEvent;
+use App\Event\HandleSourceFileEvent;
 use App\Exception\Filesystem\PathNotReadableException;
 use App\Exception\Filesystem\PathNotWritableException;
 use App\Model\File\SourceFile;
@@ -16,11 +18,13 @@ use League\Flysystem\FileAttributes;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\StorageAttributes;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class FileHandler
 {
     public function __construct(
         private readonly Filesystem $filesystem,
+        private readonly EventDispatcher $dispatcher,
     ) {
     }
 
@@ -121,6 +125,9 @@ class FileHandler
             SystemDirectory::TARGET->dirname() . "/" . $targetFile->path . "/" . $targetFilename . ".pdf"
         );
 
+
+        $this->dispatcher->dispatch(new CopyTargetFileEvent($targetFile));
+
         return true;
     }
 
@@ -157,9 +164,13 @@ class FileHandler
 
     public function buildSourceFile(string $path): SourceFile
     {
-        return new SourceFile(
+        $sourceFile = new SourceFile(
             $path,
             "NAME"
         );
+
+        $this->dispatcher->dispatch(new HandleSourceFileEvent($sourceFile));
+
+        return $sourceFile;
     }
 }

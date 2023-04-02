@@ -9,7 +9,7 @@ enum TargetDirectory: string
     case TRADES = 'trades';
     case TRADES_SECURITY = 'trades_security';
     case TRADES_CRYPTO = 'trades_crypto';
-    case PAYOUTS = 'payouts';
+    case DIVIDENDS = 'dividends';
     case OTHERS = 'others';
 
     public function parentDirectory(): ?TargetDirectory

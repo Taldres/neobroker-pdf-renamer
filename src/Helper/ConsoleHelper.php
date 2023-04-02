@@ -6,6 +6,7 @@ namespace App\Helper;
 
 use App\Enum\Broker;
 use App\Enum\Language;
+use App\Enum\Type;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -50,13 +51,7 @@ class ConsoleHelper
             ];
         }
 
-        $output->writeln(
-            [
-                "<error>Language '{$inputLanguage}' not found/supported.</error>",
-                "",
-                "<comment>Supported Languages:</comment>",
-            ]
-        );
+        $output->writeln("<comment>Supported Languages:</comment>", );
 
         self::writeTable($output, ['Option', 'Language'], $rows);
     }
@@ -65,11 +60,10 @@ class ConsoleHelper
      * Prints a table with supported brokers to the console
      *
      * @param OutputInterface $output
-     * @param string $inputBroker
      *
      * @return void
      */
-    public static function writeSupportedBrokers(OutputInterface $output, string $inputBroker): void
+    public static function writeSupportedBrokers(OutputInterface $output): void
     {
         $rows = [];
 
@@ -81,18 +75,13 @@ class ConsoleHelper
             $rows[] = [
                 $broker->value,
                 $broker->label(),
+                implode(',', array_map(fn (Language $language) => $language->value, $broker->supportedLanguages())),
             ];
         }
 
-        $output->writeln(
-            [
-                "<error>Broker '{$inputBroker}' not found/supported.</error>",
-                "",
-                "<comment>Supported Brokers:</comment>",
-            ]
-        );
+        $output->writeln("<comment>Supported Brokers:</comment>");
 
-        self::writeTable($output, ['Option', 'Broker'], $rows);
+        self::writeTable($output, ['Option', 'Broker', 'Supported Languages'], $rows);
     }
 
     /**
@@ -103,6 +92,7 @@ class ConsoleHelper
      * @param Broker $broker
      * @param bool $groupTypes
      * @param bool $groupCodes
+     * @param bool $keepOldFiles
      *
      * @return void
      */
@@ -111,10 +101,12 @@ class ConsoleHelper
         Language $language,
         Broker $broker,
         bool $groupTypes,
-        bool $groupCodes
+        bool $groupCodes,
+        bool $keepOldFiles,
     ): void {
         $groupTypes = $groupTypes ? "✅" : "❌";
         $groupCodes = $groupCodes ? "✅" : "❌";
+        $keepOldFiles = $keepOldFiles ? "✅" : "❌";
 
         $output->writeln(
             [
@@ -123,8 +115,65 @@ class ConsoleHelper
                 "🏢 Broker: {$broker->label()}",
                 $groupTypes . " Group Types",
                 $groupCodes . " Group Codes",
-                ""
+                $keepOldFiles . " Keep already existing files in target directory",
+                "",
             ]
         );
+    }
+
+    /**
+     * @param OutputInterface $output
+     * @param int $countSourceFiles
+     * @param int $countTargetFiles
+     * @param array<string, int> $countTargetTypes
+     *
+     * @return void
+     */
+    public static function writeResult(
+        OutputInterface $output,
+        int $countSourceFiles,
+        int $countTargetFiles,
+        array $countTargetTypes
+    ): void {
+        $tableRows = [];
+
+        ksort($countTargetTypes);
+
+        foreach ($countTargetTypes as $copiedType => $count) {
+            $tableRows[] = [
+                Type::from($copiedType)->label(),
+                $count,
+            ];
+        }
+
+        $output->writeln(
+            [
+                "\t<info>Done! </info>",
+                "",
+                "🎉 From <fg=yellow;options=bold>{$countSourceFiles}</> checked source files <fg=green;options=bold>{$countTargetFiles}</> were copied to the output directory ",
+            ]
+        );
+
+        $table = new Table($output);
+        $table
+            ->setHeaders(['Type', 'Files'])
+            ->setRows($tableRows)
+        ;
+        $table->render();
+    }
+
+    /**
+     * @param OutputInterface $output
+     * @param string $appName
+     * @param string $appVersion
+     *
+     * @return void
+     */
+    public static function writeAppNameAndVersion(
+        OutputInterface $output,
+        string $appName,
+        string $appVersion
+    ): void {
+        $output->writeln(["🤖 <info>{$appName} (v{$appVersion})</info>", ""]);
     }
 }
