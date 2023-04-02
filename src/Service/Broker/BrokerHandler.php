@@ -6,38 +6,41 @@ namespace App\Service\Broker;
 
 use App\Enum\Broker;
 use App\Enum\Type;
+use App\Exception\Translation\MissingTranslationKeyException;
 use App\Helper\ParseHelper;
 use App\Model\File\SourceFile;
 use App\Model\File\TargetFile;
+use App\Service\AppService;
 use App\Service\FileHandler;
-use App\Service\Translation;
+use App\Service\TranslationService;
 use League\Flysystem\FilesystemException;
-use Smalot\PdfParser\Parser as PdfParser;
+use Smalot\PdfParser\Parser;
 use Throwable;
 
 abstract class BrokerHandler
 {
     protected Broker $broker;
 
-    protected PdfParser $pdfParser;
-
     /**
-     * @param Translation $translation
+     * @param AppService $appService
      * @param FileHandler $fileHandler
+     * @param TranslationService $translationService
      */
-    public function __construct(private readonly Translation $translation, private readonly FileHandler $fileHandler)
-    {
-        $this->pdfParser = new PdfParser();
+    public function __construct(
+        private readonly AppService $appService,
+        private readonly FileHandler $fileHandler,
+        private readonly TranslationService $translationService,
+        private readonly Parser $pdfParser
+    ) {
     }
 
     /**
      * @param SourceFile $sourceFile
-     * @param bool $groupTypes
-     * @param bool $groupCodes
      *
      * @return TargetFile|null
+     * @throws MissingTranslationKeyException
      */
-    public function buildModelFromSource(SourceFile $sourceFile, bool $groupTypes = false, bool $groupCodes = false): ?TargetFile
+    public function buildTargetFileFromSource(SourceFile $sourceFile): ?TargetFile
     {
         try {
             $parse = $this->pdfParser->parseFile($sourceFile->path)->getText(1);
@@ -59,7 +62,7 @@ abstract class BrokerHandler
         }
 
         $filename = $this->defineTargetFilename($code, $date);
-        $path = $this->defineTargetDirectory($type, $code, $groupTypes, $groupCodes);
+        $path     = $this->defineTargetDirectory($type, $code);
 
         return new TargetFile($path, $filename, $sourceFile, $type, $code, $date);
     }
@@ -70,6 +73,7 @@ abstract class BrokerHandler
      * @param string $text
      *
      * @return Type|null
+     * @throws MissingTranslationKeyException
      */
     public function getType(string $text): ?Type
     {
@@ -82,17 +86,12 @@ abstract class BrokerHandler
                 continue;
             }
 
-            $translatedIndicator = $this->translation->translateIndicator(
-                $supportedType->value
+            $translatedIndicator = $this->translationService->translateIndicator(
+                $this->appService->getBroker(),
+                $supportedType
             );
 
-            if (
-                $translatedIndicator !== null
-                && ParseHelper::checkIndicator(
-                    text: $text,
-                    indicator: $translatedIndicator
-                )
-            ) {
+            if (ParseHelper::checkIndicator(text: $text, indicator: $translatedIndicator)) {
                 return $supportedType;
             }
         }
@@ -110,7 +109,7 @@ abstract class BrokerHandler
      */
     public function defineTargetFilename(string $code, string $date): string
     {
-        $timestamp     = is_int(strtotime($date)) ? strtotime($date) : null;
+        $timestamp = is_int(strtotime($date)) ? strtotime($date) : null;
         $dateFormatted = date('Ymd', $timestamp);
 
         return $code . "_" . $dateFormatted;
@@ -130,31 +129,33 @@ abstract class BrokerHandler
         );
     }
 
-    public function defineTargetDirectory(Type $type, string $code, bool $groupTypes = false, bool $groupCodes = false): string
+    public function defineTargetDirectory(Type $type, string $code): string
     {
         $targetDirectory = "";
 
-        if ($groupTypes) {
+        if ($this->appService->isGroupTypes()) {
             if ($type->targetDirectory()->parentDirectory() !== null) {
-                $translatedParentDirectory = $this->translation->translateDirectory(
-                    $type->targetDirectory()->parentDirectory(),
-                );
+                try {
+                    $translatedParentDirectory = $this->translationService->translateTargetDirectory(
+                        $type->targetDirectory()->parentDirectory(),
+                    );
 
-                if ($translatedParentDirectory !== null) {
                     $targetDirectory .= $translatedParentDirectory . "/";
+                } catch (Throwable $e) {
                 }
             }
 
-            $translatedTargetDirectory = $this->translation->translateDirectory(
-                $type->targetDirectory(),
-            );
+            try {
+                $translatedTargetDirectory = $this->translationService->translateTargetDirectory(
+                    $type->targetDirectory(),
+                );
 
-            if ($translatedTargetDirectory !== null) {
                 $targetDirectory .= $translatedTargetDirectory;
+            } catch (Throwable $e) {
             }
         }
 
-        if ($groupCodes) {
+        if ($this->appService->isGroupCodes()) {
             if (!empty($targetDirectory)) {
                 $targetDirectory .= "/";
             }

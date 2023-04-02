@@ -7,55 +7,35 @@ namespace App\Command;
 use App\Enum\Broker;
 use App\Enum\Directory\SystemDirectory;
 use App\Enum\Language;
-use App\Enum\Type;
+use App\Exception\LanguageNotSupportedByBrokerException;
 use App\Exception\NoSourceFilesException;
 use App\Helper\ConsoleHelper;
 use App\Model\File\SourceFile;
 use App\Model\File\TargetFile;
-use App\Service\Broker\BrokerHandler;
-use App\Service\Broker\TraderepublicHandler;
+use App\Service\AppService;
+use App\Service\BrokerService;
 use App\Service\FileHandler;
-use App\Service\Translation;
-use Exception;
 use League\Flysystem\FileAttributes;
 use League\Flysystem\FilesystemException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Translation\Translator;
 use Throwable;
 
 #[AsCommand(name: 'rename:run')]
 class RunCommand extends Command
 {
-    private string $sourceRoot;
-    private string $targetRoot;
-    private string $projectRoot;
-
-    private int $countSourceFiles = 0;
-    private int $countTargetFiles = 0;
-
-    /** @var array<string, int> $countTargetTypes */
-    private array $countTargetTypes = [];
-
-    private bool $groupByCode = false;
-    private bool $groupByType = false;
-
-    private BrokerHandler $brokerFileHandler;
-
     public function __construct(
-        private readonly Translation $translation,
-        private readonly TraderepublicHandler $traderepublicHandler,
-        private readonly FileHandler $fileSystemHandler,
+        private readonly AppService $appService,
+        private readonly FileHandler $fileHandler,
+        private readonly BrokerService $brokerService,
+        private readonly Translator $translator,
     ) {
         parent::__construct("rename:run");
-
-        $this->projectRoot = dirname(__DIR__, 2);
-        $this->sourceRoot  = $this->projectRoot . "/" . SystemDirectory::SOURCE->value;
-        $this->targetRoot  = $this->projectRoot . "/" . SystemDirectory::TARGET->value;
     }
 
     /**
@@ -88,15 +68,13 @@ class RunCommand extends Command
                  'lang',
                  'l',
                  InputOption::VALUE_OPTIONAL,
-                 'The language in which the broker files were generated.',
-                 Language::DE->value
+                 'The language in which the broker files were generated. [default: "de"]',
              )
              ->addOption(
                  'broker',
                  'b',
                  InputOption::VALUE_OPTIONAL,
-                 'The brokers name who generated the files.',
-                 Broker::TRADEREPUBLIC->value
+                 'The brokers name who generated the files. [default: "traderepublic"]',
              )
         ;
     }
@@ -112,51 +90,36 @@ class RunCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            $inputBroker = strval($input->getOption('broker'));
+            ConsoleHelper::writeAppNameAndVersion($output, $this->appService->appName, $this->appService->appVersion);
 
-            try {
-                $broker = Broker::from($inputBroker);
-            } catch (Throwable $throwable) {
-                ConsoleHelper::writeSupportedBrokers($output, $inputBroker);
-
-                return Command::INVALID;
+            if (!$this->setup($input, $output)) {
+                return Command::FAILURE;
             }
 
-            $inputLang = strval($input->getOption('lang'));
-
-            try {
-                $lang = Language::from($inputLang);
-            } catch (Throwable $throwable) {
-                ConsoleHelper::writeSupportedLanguages($output, $inputLang);
-
-                return Command::INVALID;
-            }
-
-            $keepOldFiles      = (bool) $input->getOption('keep-files');
-            $this->groupByCode = (bool) $input->getOption('group-code');
-            $this->groupByType = (bool) $input->getOption('group-type');
-
-            ConsoleHelper::writeConfiguration($output, $lang, $broker, $this->groupByType, $this->groupByCode);
-
-            # Setup services
-            $this->translation->setup($lang, $broker);
-            $this->brokerFileHandler = $this->getBrokerHandler($broker);
+            ConsoleHelper::writeConfiguration(
+                $output,
+                $this->appService->getLanguage(),
+                $this->appService->getBroker(),
+                $this->appService->isGroupTypes(),
+                $this->appService->isGroupCodes(),
+                $this->appService->isKeepOldFiles(),
+            );
 
             # check directories
-            $this->fileSystemHandler->isDirectoryReadable($this->sourceRoot);
-            $this->fileSystemHandler->isDirectoryWriteable($this->targetRoot);
+            $this->fileHandler->isDirectoryReadable(SystemDirectory::SOURCE->dirname());
+            $this->fileHandler->isDirectoryWriteable(SystemDirectory::TARGET->dirname());
 
-            if (!$keepOldFiles) {
+            if (!$this->appService->isKeepOldFiles()) {
                 $output->writeln('<comment>Clearing target directory</comment>');
 
-                $this->fileSystemHandler->clearTargetDirectory();
+                $this->fileHandler->clearTargetDirectory();
             }
 
             $output->writeln(['<comment>Checking source files</comment>', '',]);
 
             $sourceFiles = $this->getSourceFiles();
 
-            $progressBar = new ProgressBar($output, $this->countSourceFiles);
+            $progressBar = new ProgressBar($output, $this->appService->getCountSourceFiles());
 
             foreach ($sourceFiles as $sourceFile) {
                 $this->handleSourceFile($sourceFile);
@@ -173,43 +136,79 @@ class RunCommand extends Command
             return Command::FAILURE;
         }
 
-        $output->writeln(
-            [
-                "\t<info>Done! </info>",
-                "",
-                "🎉 Copied <fg=green;options=bold>{$this->countTargetFiles}</> files from source to target directory:",
-            ]
+        ConsoleHelper::writeResult(
+            $output,
+            $this->appService->getCountSourceFiles(),
+            $this->appService->getCountTargetFiles(),
+            $this->appService->getCountTargetTypes()
         );
-
-        $this->writeResult($output);
 
         return Command::SUCCESS;
     }
 
     /**
+     * @param InputInterface $input
      * @param OutputInterface $output
      *
-     * @return void
+     * @return bool
+     * @throws LanguageNotSupportedByBrokerException
      */
-    public function writeResult(OutputInterface $output): void
+    private function setup(InputInterface $input, OutputInterface $output): bool
     {
-        $tableRows = [];
+        $inputBroker = strval($input->getOption('broker'));
 
-        ksort($this->countTargetTypes);
+        try {
+            $broker = !empty($inputBroker) ? Broker::from($inputBroker) : null;
+        } catch (Throwable $throwable) {
+            $output->writeln(
+                [
+                    "<error>Broker '{$inputBroker}' not found/supported.</error>",
+                    "",
+                ]
+            );
 
-        foreach ($this->countTargetTypes as $copiedType => $count) {
-            $tableRows[] = [
-                Type::from($copiedType)->label(),
-                $count,
-            ];
+            ConsoleHelper::writeSupportedBrokers($output);
+
+            return false;
         }
 
-        $table = new Table($output);
-        $table
-            ->setHeaders(['Type', 'Files'])
-            ->setRows($tableRows)
+        $inputLang = strval($input->getOption('lang'));
+
+        try {
+            $lang = !empty($inputLang) ? Language::from($inputLang) : null;
+        } catch (Throwable $throwable) {
+            $output->writeln(
+                [
+                    "<error>Language '{$inputLang}' not found/supported.</error>",
+                    "",
+                ]
+            );
+
+            ConsoleHelper::writeSupportedLanguages($output, $inputLang);
+
+            return false;
+        }
+
+        $keepOldFiles = (bool) $input->getOption('keep-files');
+        $groupCodes   = (bool) $input->getOption('group-code');
+        $groupTypes   = (bool) $input->getOption('group-type');
+
+        # Setup services
+        if ($lang instanceof Language) {
+            $this->appService->setLanguage($lang);
+            $this->translator->setLocale($lang->value);
+        }
+
+        if ($broker instanceof Broker) {
+            $this->appService->setBroker($broker);
+        }
+
+        $this->appService->setGroupTypes($groupTypes)
+                         ->setGroupCodes($groupCodes)
+                         ->setKeepOldFiles($keepOldFiles)
         ;
-        $table->render();
+
+        return true;
     }
 
     /**
@@ -217,24 +216,22 @@ class RunCommand extends Command
      *
      * @return SourceFile[]
      * @throws FilesystemException
-     * @throws Exception
+     * @throws NoSourceFilesException
      */
     private function getSourceFiles(): array
     {
         /** @var string[] $sourcePaths */
-        $sourcePaths = $this->fileSystemHandler->getPdfFilesFromSource()->map(
+        $sourcePaths = $this->fileHandler->getPdfFilesFromSource()->map(
             fn (FileAttributes $i) => $i->path()
         );
 
         $sourceFiles = [];
 
         foreach ($sourcePaths as $sourcePath) {
-            $sourceFiles[] = $this->fileSystemHandler->buildSourceFile($sourcePath);
+            $sourceFiles[] = $this->fileHandler->buildSourceFile($sourcePath);
         }
 
-        $this->countSourceFiles = count($sourceFiles);
-
-        if ($this->countSourceFiles < 1) {
+        if ($this->appService->getCountSourceFiles() < 1) {
             throw new NoSourceFilesException(code: 1680287496936);
         }
 
@@ -247,44 +244,20 @@ class RunCommand extends Command
      * @param SourceFile $sourceFile
      *
      * @return void
-     * @throws Exception
      * @throws FilesystemException
      */
     private function handleSourceFile(SourceFile $sourceFile): void
     {
-        $targetFile = $this->brokerFileHandler->buildModelFromSource(
-            $sourceFile,
-            $this->groupByType,
-            $this->groupByCode
+        $brokerHandler = $this->brokerService->getHandler();
+
+        $targetFile = $brokerHandler->buildTargetFileFromSource(
+            $sourceFile
         );
 
         if (!$targetFile instanceof TargetFile) {
             return;
         }
 
-        if ($this->brokerFileHandler->handleTargetFile($targetFile)
-        ) {
-            if (isset($this->countTargetTypes[$targetFile->type->value])) {
-                $this->countTargetTypes[$targetFile->type->value]++;
-            } else {
-                $this->countTargetTypes[$targetFile->type->value] = 1;
-            }
-
-            $this->countTargetFiles++;
-        }
-    }
-
-    /**
-     * Returns the handler for the specific broker
-     *
-     * @param Broker $broker
-     *
-     * @return TraderepublicHandler
-     */
-    private function getBrokerHandler(Broker $broker): BrokerHandler
-    {
-        return match ($broker) {
-            Broker::TRADEREPUBLIC => $this->traderepublicHandler,
-        };
+        $brokerHandler->handleTargetFile($targetFile);
     }
 }

@@ -2,6 +2,7 @@
 <?php
 
 use App\Application;
+use App\Enum\Directory\SystemDirectory;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -14,6 +15,8 @@ $projectRoot = dirname(__DIR__);
 
 $container->setParameter('project_directory', $projectRoot);
 $container->setParameter('vendor_directory', $projectRoot.'/vendor');
+$container->setParameter('source_directory', $projectRoot. "/" . SystemDirectory::SOURCE->value);
+$container->setParameter('target_directory', $projectRoot. "/" . SystemDirectory::SOURCE->value);
 
 $loader = new YamlFileLoader($container, new FileLocator());
 $loader->load(__DIR__.'/../config/services.yml');

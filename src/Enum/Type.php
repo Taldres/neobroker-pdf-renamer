@@ -10,7 +10,7 @@ enum Type: string
 {
     case SECURITY_TRADE = 'security_trade';
     case CRYPTO_TRADE = 'crypto_trade';
-    case PAYOUT = 'payout';
+    case DIVIDENDS = 'dividends';
     case OTHER = 'other';
 
     public function label(): string
@@ -18,7 +18,7 @@ enum Type: string
         return match ($this) {
             self::SECURITY_TRADE => 'Security Trade',
             self::CRYPTO_TRADE => 'Crypto Trade',
-            self::PAYOUT => 'Payout',
+            self::DIVIDENDS => 'Dividends',
             default => 'Other',
         };
     }
@@ -28,7 +28,7 @@ enum Type: string
         return match ($this) {
             self::SECURITY_TRADE => TargetDirectory::TRADES_SECURITY,
             self::CRYPTO_TRADE => TargetDirectory::TRADES_CRYPTO,
-            self::PAYOUT => TargetDirectory::PAYOUTS,
+            self::DIVIDENDS => TargetDirectory::DIVIDENDS,
             default => TargetDirectory::OTHERS,
         };
     }

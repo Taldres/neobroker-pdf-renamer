@@ -1,28 +1,38 @@
 parameters:
-  version: '0.2.0'
+  appName: 'Neobroker PDF Renamer'
+  version: '0.2.1'
+  language: 'de'
 
 services:
   _defaults:
     autowire: true
     autoconfigure: true
     bind:
-      string $version: '%version%'
+      string $appName: '%appName%'
+      string $appVersion: '%version%'
       string $projectDirectory: '%project_directory%'
       string $vendorDirectory: '%vendor_directory%'
+      string $sourceDirectory: '%source_directory%'
+      string $targetDirectory: '%target_directory%'
 
   _instanceof:
     Symfony\Component\Console\Command\Command:
       tags: [ 'command' ]
+    Symfony\Component\EventDispatcher\EventSubscriberInterface:
+      tags: [ 'event_subscriber' ]
 
   App\:
     public: true
     resource: '../src/'
-    exclude: ['../src/Model/', '../src/Exception/']
+    exclude: ['../src/Model/', '../src/Exception/', '../src/Event/']
+    lazy: true
 
   App\Application:
     public: true
     arguments:
+      - '%version%'
       - !tagged command
+      - !tagged event_subscriber
 
   League\Flysystem\Local\LocalFilesystemAdapter:
     arguments:
@@ -30,4 +40,18 @@ services:
 
   League\Flysystem\Filesystem:
     arguments:
-        - '@League\Flysystem\Local\LocalFilesystemAdapter'
+      - '@League\Flysystem\Local\LocalFilesystemAdapter'
+
+  Symfony\Component\Translation\Translator:
+    arguments:
+      - '%language%'
+    calls:
+      - [ addLoader, [ 'php', '@Symfony\Component\Translation\Loader\PhpFileLoader' ] ]
+      - [ setFallbackLocales, [ ['en'] ] ]
+      - [ addResource, [ 'php', '%project_directory%/translations/de.php', 'de' ] ]
+      - [ addResource, [ 'php', '%project_directory%/translations/en.php', 'en' ] ]
+
+  Symfony\Component\EventDispatcher\EventDispatcher:
+  Symfony\Component\Translation\Loader\PhpFileLoader:
+  Symfony\Component\Dotenv\Dotenv:
+  Smalot\PdfParser\Parser:
