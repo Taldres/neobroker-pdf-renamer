@@ -1,6 +1,6 @@
 {
   "name": "taldres/traderepublic-pdf-renamer",
-  "description": "A tool to rename and optionally sort Trade Republic pdf files.",
+  "description": "A tool to rename and optionally sort PDF from neobrokers like Traderepublic.",
   "authors": [
     {
       "name": "Taldres",
@@ -13,8 +13,9 @@
     "MIT"
   ],
   "keywords": [
-    "traderepublic",
-    "pdf renamer"
+    "neobroker",
+    "pdf renamer",
+    "traderepublic"
   ],
   "config": {
     "platform": {
